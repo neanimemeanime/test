@@ -1,11 +1,11 @@
-﻿// Файл: Views/PieChartControl.xaml.cs
-using RepairServiceAppMVVM.ViewModels;
+﻿using RepairServiceAppMVVM.ViewModels;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation; // Добавили для анимации
 
 namespace RepairServiceAppMVVM.Views
 {
@@ -14,6 +14,8 @@ namespace RepairServiceAppMVVM.Views
         public PieChartControl()
         {
             InitializeComponent();
+            // Убедимся, что начальная прозрачность 0, чтобы анимация fadeIn сработала при первом появлении
+            this.Opacity = 0;
         }
 
         public static readonly DependencyProperty SlicesProperty =
@@ -30,21 +32,19 @@ namespace RepairServiceAppMVVM.Views
         {
             if (d is PieChartControl control)
             {
-                // Отписываемся от старой коллекции, если она была
                 if (e.OldValue is ObservableCollection<PieSliceViewModel> oldCollection)
                 {
                     oldCollection.CollectionChanged -= control.OnSlicesCollectionChanged;
                 }
-                // Подписываемся на новую коллекцию
                 if (e.NewValue is ObservableCollection<PieSliceViewModel> newCollection)
                 {
                     newCollection.CollectionChanged += control.OnSlicesCollectionChanged;
                 }
+                // Вызываем UpdateChart при изменении коллекции
                 control.UpdateChart();
             }
         }
 
-        // Этот метод будет вызываться при любом изменении коллекции
         private void OnSlicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             UpdateChart();
@@ -52,52 +52,51 @@ namespace RepairServiceAppMVVM.Views
 
         private void UpdateChart()
         {
+            var itemsControl = this.FindName("PieItemsControl") as ItemsControl;
+            if (itemsControl == null) return;
+
+            // Если данных нет, очищаем и скрываем диаграмму, делаем ее прозрачной
             if (Slices == null || Slices.Count == 0)
             {
-                // Очищаем Canvas, если данных нет
-                if (this.Content is ItemsControl itemsControl)
-                {
-                    itemsControl.ItemsSource = null;
-                    itemsControl.ItemsSource = Slices;
-                }
+                itemsControl.ItemsSource = null;
+                // Анимируем исчезновение
+                DoubleAnimation fadeOutAnimation = new DoubleAnimation(this.Opacity, 0, TimeSpan.FromSeconds(0.2));
+                fadeOutAnimation.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+                this.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
                 return;
             }
 
-            double currentAngle = -90; // Начинаем сверху
-            double radius = 150;
-            Point center = new Point(radius, radius);
-            double totalPercentage = 0;
+            // Пересчитываем геометрию для каждого среза
+            double currentAngle = -90; // Начинаем с верхней точки (-90 градусов)
+            double radius = 100; // Радиус диаграммы. Если изменяете Canvas в XAML, измените и здесь.
+            Point center = new Point(radius, radius); // Центр Canvas (150,150 для радиуса 150)
 
             foreach (var slice in Slices)
             {
-                totalPercentage += slice.Percentage;
                 double angle = slice.Percentage * 360;
 
-                Point startPoint = new Point(
-                    center.X + radius * Math.Cos(currentAngle * Math.PI / 180),
-                    center.Y + radius * Math.Sin(currentAngle * Math.PI / 180)
-                );
+                // Вычисляем начальную и конечную точки сегмента
+                Point startPoint = new Point(center.X + radius * Math.Cos(currentAngle * Math.PI / 180),
+                                             center.Y + radius * Math.Sin(currentAngle * Math.PI / 180));
 
-                currentAngle += angle;
+                currentAngle += angle; // Переходим к следующему углу
 
-                Point endPoint = new Point(
-                    center.X + radius * Math.Cos(currentAngle * Math.PI / 180),
-                    center.Y + radius * Math.Sin(currentAngle * Math.PI / 180)
-                );
+                Point endPoint = new Point(center.X + radius * Math.Cos(currentAngle * Math.PI / 180),
+                                           center.Y + radius * Math.Sin(currentAngle * Math.PI / 180));
 
-                slice.Points.Clear();
-                slice.Points.Add(startPoint);
-                slice.Points.Add(endPoint);
-                // Указываем, является ли дуга большей 180 градусов
-                slice.IsLargeArc = angle > 180;
+                slice.Points = new PointCollection { startPoint, endPoint };
+                slice.IsLargeArc = angle > 180; // Проверяем, нужна ли большая дуга
             }
 
-            // Обновляем ItemsSource, чтобы WPF перерисовал элементы
-            if (this.Content is ItemsControl ic)
-            {
-                ic.ItemsSource = null;
-                ic.ItemsSource = Slices;
-            }
+            // Принудительная перерисовка ItemsControl
+            // Этот трюк нужен, чтобы Path в ItemTemplate перечитали свойства Points и IsLargeArc
+            itemsControl.ItemsSource = null;
+            itemsControl.ItemsSource = this.Slices;
+
+            // Анимируем появление всего контрола
+            DoubleAnimation fadeInAnimation = new DoubleAnimation(this.Opacity, 1, TimeSpan.FromSeconds(0.4));
+            fadeInAnimation.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+            this.BeginAnimation(UIElement.OpacityProperty, fadeInAnimation);
         }
     }
 }

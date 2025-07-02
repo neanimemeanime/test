@@ -1,112 +1,96 @@
-﻿<!-- Файл: Views/DashboardView.xaml -->
-<UserControl x:Class="RepairServiceAppMVVM.Views.DashboardView"
+﻿<UserControl x:Class="RepairServiceAppMVVM.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RepairServiceAppMVVM.Views"
+             xmlns:converters="clr-namespace:RepairServiceAppMVVM.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="1100">
+             d:DesignHeight="600" d:DesignWidth="1000"
+             Background="Transparent">
     <UserControl.Resources>
-        <Style TargetType="TextBlock" x:Key="StatValue">
-            <Setter Property="FontSize" Value="36"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+
+        <Style x:Key="StatCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Effect" Value="{StaticResource MaterialShadowDepth1}"/>
         </Style>
-        <Style TargetType="TextBlock" x:Key="StatLabel">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#555555"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+
+        <Style x:Key="StatIconStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="Foreground" Value="#007ACC"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,20,0"/>
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <StackPanel Margin="10">
+            <TextBlock Text="Панель управления" FontSize="24" FontWeight="SemiBold" Margin="10,0,10,10"/>
 
-            <TextBlock Grid.Row="0" Text="Обзор состояния сервиса" FontSize="24" FontWeight="Bold" Foreground="#333333" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-
-            <Border Grid.Row="1" Margin="0,0,0,20" Background="#F8F8F8" Padding="15" CornerRadius="8">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <StackPanel Margin="20,0">
-                        <TextBlock Text="Всего ремонтов:" Style="{StaticResource StatLabel}"/>
-                        <TextBlock Text="{Binding TotalRepairs}" Style="{StaticResource StatValue}" Foreground="#007ACC"/>
-                    </StackPanel>
-                    <StackPanel Margin="20,0">
-                        <TextBlock Text="Всего клиентов:" Style="{StaticResource StatLabel}"/>
-                        <TextBlock Text="{Binding TotalClients}" Style="{StaticResource StatValue}" Foreground="#28A745"/>
-                    </StackPanel>
-                    <StackPanel Margin="20,0">
-                        <TextBlock Text="Всего устройств:" Style="{StaticResource StatLabel}"/>
-                        <TextBlock Text="{Binding TotalDevices}" Style="{StaticResource StatValue}" Foreground="#FFC107"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0" Margin="10,0" Background="#F8F8F8" Padding="15" CornerRadius="8">
-                    <StackPanel>
-                        <TextBlock Text="Ремонты по статусам" FontSize="18" FontWeight="Bold" Foreground="#333333" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                        <ItemsControl ItemsSource="{Binding RepairsByStatus}" Margin="0,0,0,10">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding StatusName}" FontWeight="SemiBold"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Count, StringFormat='{} ({0} шт.)'}" Margin="10,0"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding TotalCost, StringFormat='{}{0:C}', ConverterCulture=ru-RU}" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="1" Margin="10,0" Background="#F8F8F8" Padding="15" CornerRadius="8">
-                    <!-- ИСПРАВЛЕНО: Используем Grid для четкого разделения -->
+            <UniformGrid Columns="3" Margin="0,0,0,10">
+                <Border Style="{StaticResource StatCardStyle}">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Text="Распределение ремонтов" FontSize="18" FontWeight="Bold" Foreground="#333333" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                        <local:PieChartControl Grid.Row="1" Slices="{Binding PieSlices}" Width="250" Height="250" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <ItemsControl Grid.Row="2" ItemsSource="{Binding PieSlices}" Margin="0,10,0,0" HorizontalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="5">
-                                        <Rectangle Width="10" Height="10" Fill="{Binding Fill}" Margin="0,0,5,0"/>
-                                        <TextBlock Text="{Binding Title}" FontSize="12"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE9F9;" Style="{StaticResource StatIconStyle}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Всего ремонтов" FontSize="14" Foreground="Gray"/>
+                            <TextBlock Text="{Binding TotalRepairs}" FontSize="28" FontWeight="Bold"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
-            </Grid>
+                <Border Style="{StaticResource StatCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE915;" Style="{StaticResource StatIconStyle}" Foreground="#FF9800"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="В работе" FontSize="14" Foreground="Gray"/>
+                            <TextBlock Text="{Binding RepairsInProgress}" FontSize="28" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource StatCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE930;" Style="{StaticResource StatIconStyle}" Foreground="#4CAF50"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Завершено" FontSize="14" Foreground="Gray"/>
+                            <TextBlock Text="{Binding RepairsCompleted}" FontSize="28" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </UniformGrid>
 
-            <Button Grid.Row="3" Content="Обновить данные" Command="{Binding LoadStatsCommand}" HorizontalAlignment="Center" Margin="0,20,0,0" Width="180" Height="40"/>
-        </Grid>
+            <Border Style="{StaticResource StatCardStyle}" MinHeight="300">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Статусы ремонтов" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                    <local:PieChartControl Grid.Row="1" Slices="{Binding StatusSlices}"
+                       Visibility="{Binding StatusSlices.Count, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <!-- Подсказка, если данных нет -->
+                    <TextBlock Grid.Row="1" Text="Нет данных для отображения диаграммы." 
+                    FontSize="16" Foreground="Gray"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" 
+                    Visibility="{Binding StatusSlices.Count, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                </Grid>
+            </Border>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

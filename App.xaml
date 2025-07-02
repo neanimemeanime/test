@@ -3,6 +3,79 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RepairServiceAppMVVM">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Здесь могут быть другие словари ресурсов -->
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Тень для элементов -->
+            <DropShadowEffect x:Key="MaterialShadowDepth1" BlurRadius="4" ShadowDepth="1" Direction="270" Color="#CCCCCC" Opacity="0.4"/>
+            <DropShadowEffect x:Key="MaterialShadowDepth2" BlurRadius="8" ShadowDepth="2.5" Direction="270" Color="#BBBBBB" Opacity="0.4"/>
+
+            <!-- ОБНОВЛЕННЫЕ СТИЛИ КНОПОК -->
+
+            <!-- Базовый стиль для кнопок CRUD -->
+            <Style x:Key="CrudButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="140"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="5"
+                                    Effect="{StaticResource MaterialShadowDepth1}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Effect" Value="{StaticResource MaterialShadowDepth2}"/>
+                                    <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Effect" Value="{StaticResource MaterialShadowDepth1}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                                    <Setter Property="Effect" Value="{x:Null}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Кнопка "Добавить" (зеленая) -->
+            <Style x:Key="AddButtonStyle" TargetType="Button" BasedOn="{StaticResource CrudButtonStyle}">
+                <Setter Property="Background" Value="#4CAF50"/>
+            </Style>
+
+            <!-- Кнопка "Изменить" (оранжевая) -->
+            <Style x:Key="EditButtonStyle" TargetType="Button" BasedOn="{StaticResource CrudButtonStyle}">
+                <Setter Property="Background" Value="#FF9800"/>
+            </Style>
+
+            <!-- Кнопка "Удалить" (красная) -->
+            <Style x:Key="DeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource CrudButtonStyle}">
+                <Setter Property="Background" Value="#F44336"/>
+            </Style>
+
+            <!-- Кнопка "Сохранить" (синяя) -->
+            <Style x:Key="SaveButtonStyle" TargetType="Button" BasedOn="{StaticResource CrudButtonStyle}">
+                <Setter Property="Background" Value="#2196F3"/>
+            </Style>
+
+            <!-- Общий стиль для кнопок действий (как старый ActionButtonStyle) -->
+            <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource CrudButtonStyle}">
+                <Setter Property="Background" Value="#007ACC"/>
+            </Style>
+
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

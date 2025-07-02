@@ -7,6 +7,7 @@
              xmlns:converters="clr-namespace:RepairServiceAppMVVM.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1100">
+
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style x:Key="ActionButtonStyle" TargetType="Button">

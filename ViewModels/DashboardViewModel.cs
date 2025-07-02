@@ -1,77 +1,133 @@
-﻿// Файл: ViewModels/DashboardViewModel.cs
-using RepairServiceAppMVVM.Commands;
-using RepairServiceAppMVVM.Models;
+﻿using RepairServiceAppMVVM.Models;
 using RepairServiceAppMVVM.Services;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows.Media;
+using System.Windows;
+using System.Windows.Media; // Убедитесь, что эта директива есть
 
 namespace RepairServiceAppMVVM.ViewModels
 {
     public class DashboardViewModel : NavigationViewModel
     {
         private readonly IDashboardService _dashboardService;
-        private readonly Color[] _pieChartColors = { Colors.LightBlue, Colors.Orange, Colors.LightGreen, Colors.Red, Colors.Purple, Colors.Gold, Colors.Teal };
-
         private int _totalRepairs;
-        public int TotalRepairs { get => _totalRepairs; set => SetProperty(ref _totalRepairs, value); }
-
+        private int _repairsInProgress;
+        private int _repairsCompleted;
         private int _totalClients;
-        public int TotalClients { get => _totalClients; set => SetProperty(ref _totalClients, value); }
-
         private int _totalDevices;
-        public int TotalDevices { get => _totalDevices; set => SetProperty(ref _totalDevices, value); }
+        private ObservableCollection<PieSliceViewModel> _statusSlices;
 
-        public ObservableCollection<StatusSummary> RepairsByStatus { get; } = new ObservableCollection<StatusSummary>();
-        public ObservableCollection<PieSliceViewModel> PieSlices { get; } = new ObservableCollection<PieSliceViewModel>();
+        public int TotalRepairs
+        {
+            get => _totalRepairs;
+            set { _totalRepairs = value; OnPropertyChanged(); }
+        }
 
-        public ICommand LoadStatsCommand { get; }
+        public int RepairsInProgress
+        {
+            get => _repairsInProgress;
+            set { _repairsInProgress = value; OnPropertyChanged(); }
+        }
+
+        public int RepairsCompleted
+        {
+            get => _repairsCompleted;
+            set { _repairsCompleted = value; OnPropertyChanged(); }
+        }
+
+        public int TotalClients
+        {
+            get => _totalClients;
+            set { _totalClients = value; OnPropertyChanged(); }
+        }
+
+        public int TotalDevices
+        {
+            get => _totalDevices;
+            set { _totalDevices = value; OnPropertyChanged(); }
+        }
+
+        public ObservableCollection<PieSliceViewModel> StatusSlices
+        {
+            get => _statusSlices;
+            set { _statusSlices = value; OnPropertyChanged(); }
+        }
 
         public DashboardViewModel(IDashboardService dashboardService)
         {
             _dashboardService = dashboardService;
-            DisplayName = "Панель управления";
-            LoadStatsCommand = new RelayCommand(async (_) => await LoadStatsAsync());
-            _ = LoadStatsAsync();
+            StatusSlices = new ObservableCollection<PieSliceViewModel>();
+            // Дополнительный вызов LoadDashboardDataAsync можно добавить здесь,
+            // если вы хотите, чтобы данные загружались сразу при создании ViewModel.
+            // Если вы загружаете данные по команде или через событие, оставьте как есть.
         }
 
-        private async Task LoadStatsAsync()
+        public async Task LoadDashboardDataAsync()
         {
-            var stats = await _dashboardService.GetDashboardStatsAsync();
-            TotalRepairs = stats.TotalRepairs;
-            TotalClients = stats.TotalClients;
-            TotalDevices = stats.TotalDevices;
-
-            RepairsByStatus.Clear();
-            foreach (var item in stats.RepairsByStatus)
+            try
             {
-                RepairsByStatus.Add(item);
-            }
+                var stats = await _dashboardService.GetDashboardStatsAsync();
 
-            UpdatePieChart();
-        }
+                TotalRepairs = stats.TotalRepairs;
+                TotalClients = stats.TotalClients;
+                TotalDevices = stats.TotalDevices;
 
-        private void UpdatePieChart()
-        {
-            PieSlices.Clear();
-            if (RepairsByStatus.Count == 0) return;
+                // --- Расчет ремонтов в работе и завершенных ---
+                var activeStatuses = new List<string> { "В работе", "Диагностика", "Ожидает запчасти", "Готов к выдаче" };
+                RepairsInProgress = stats.RepairsByStatus
+                                             .Where(s => activeStatuses.Contains(s.StatusName))
+                                             .Sum(s => s.Count);
 
-            double totalCount = RepairsByStatus.Sum(s => s.Count);
-            if (totalCount == 0) return;
+                RepairsCompleted = stats.RepairsByStatus.FirstOrDefault(s => s.StatusName == "Выдан")?.Count ?? 0;
 
-            int colorIndex = 0;
-            foreach (var status in RepairsByStatus)
-            {
-                var slice = new PieSliceViewModel
+                var newSlices = new ObservableCollection<PieSliceViewModel>();
+                var totalForChart = (double)stats.RepairsByStatus.Sum(s => s.Count);
+
+                if (totalForChart > 0)
                 {
-                    Title = $"{status.StatusName} ({status.Count} шт.)",
-                    Percentage = status.Count / totalCount,
-                    Fill = new SolidColorBrush(_pieChartColors[colorIndex % _pieChartColors.Length])
-                };
-                PieSlices.Add(slice);
-                colorIndex++;
+                    // --- НОВАЯ ЦВЕТОВАЯ ПАЛИТРА ---
+                    var colors = new List<Brush>
+                    {
+                        // Пример палитры (на основе Material Design, но слегка приглушенной)
+                        // Оттенки синего
+                        new SolidColorBrush(Color.FromRgb(33, 150, 243)),  // Blue 500
+                        new SolidColorBrush(Color.FromRgb(63, 81, 181)),   // Indigo 500
+                        // Оттенки зеленого/акценты
+                        new SolidColorBrush(Color.FromRgb(76, 175, 80)),   // Green 500
+                        new SolidColorBrush(Color.FromRgb(0, 150, 136)),   // Teal 500
+                        // Оттенки оранжевого/красного/теплого
+                        new SolidColorBrush(Color.FromRgb(255, 152, 0)),   // Orange 500
+                        new SolidColorBrush(Color.FromRgb(255, 87, 34)),   // Deep Orange 500
+                        // Нейтральные/дополнительные
+                        new SolidColorBrush(Color.FromRgb(158, 158, 158)), // Grey 500
+                        new SolidColorBrush(Color.FromRgb(96, 125, 139))    // Blue Grey 500
+                        // Вы можете искать "material design color palette" или "flat UI colors"
+                        // для вдохновения.
+                    };
+                    int colorIndex = 0;
+
+                    foreach (var summary in stats.RepairsByStatus)
+                    {
+                        newSlices.Add(new PieSliceViewModel
+                        {
+                            Title = summary.StatusName,
+                            Count = summary.Count,
+                            Percentage = (summary.Count / totalForChart),
+                            Brush = colors[colorIndex % colors.Count] // Назначаем цвет из новой палитры
+                        });
+                        colorIndex++;
+                    }
+                }
+
+                StatusSlices = newSlices; // Присваиваем новую коллекцию
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка при загрузке данных для панели управления:\n\n{ex.Message}",
+                                 "Ошибка загрузки", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

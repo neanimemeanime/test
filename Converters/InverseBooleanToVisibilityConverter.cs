@@ -5,10 +5,9 @@ using System.Windows.Data;
 
 namespace RepairServiceAppMVVM.Converters
 {
-    // Атрибут ValueConversion можно убрать, так как теперь работаем с разными типами.
-    // Если оставите, это просто подсказка для дизайнера, на функционал не влияет.
+    // Атрибут ValueConversion можно убрать.
     // [ValueConversion(typeof(bool), typeof(Visibility))]
-    public class BooleanToVisibilityConverter : IValueConverter
+    public class InverseBooleanToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -24,7 +23,8 @@ namespace RepairServiceAppMVVM.Converters
             }
             // Можно добавить обработку других типов, если потребуется
 
-            return boolRepresentation ? Visibility.Visible : Visibility.Collapsed;
+            // Инвертируем результат: true -> Collapsed, false -> Visible
+            return boolRepresentation ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -32,4 +32,4 @@ namespace RepairServiceAppMVVM.Converters
             throw new NotImplementedException();
         }
     }
-}   
+}
